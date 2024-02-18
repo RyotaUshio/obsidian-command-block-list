@@ -1,4 +1,6 @@
-import { Plugin } from 'obsidian';
+import { Command, Plugin } from 'obsidian';
+import { around } from 'monkey-around';
+
 import { MyPluginSettings, DEFAULT_SETTINGS, SampleSettingTab } from 'settings';
 
 
@@ -9,6 +11,17 @@ export default class MyPlugin extends Plugin {
 		await this.loadSettings();
 		await this.saveSettings();
 		this.addSettingTab(new SampleSettingTab(this));
+
+		const plugin = this;
+
+		this.register(around(this.app.commands.constructor.prototype, {
+			listCommands(old) {
+				return function (...args: any[]) {
+					const commands: Command[] = old.call(this, ...args);
+					return commands.filter((command) => !plugin.settings.blacklist.includes(command.id));
+				}
+			}
+		}));
 	}
 
 	async loadSettings() {

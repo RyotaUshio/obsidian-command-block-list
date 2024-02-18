@@ -1,0 +1,3 @@
+.command-blacklist-settings .setting-item-control input.error {
+    border-color: var(--background-modifier-error);
+}

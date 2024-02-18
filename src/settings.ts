@@ -1,12 +1,62 @@
-import { PluginSettingTab, Setting } from 'obsidian';
+import { AbstractInputSuggest, Command, IconName, PluginSettingTab, SearchResultContainer, Setting, prepareFuzzySearch, setIcon, sortSearchResults, setTooltip } from 'obsidian';
 import MyPlugin from 'main';
 
 
 export interface MyPluginSettings {
+	blacklist: string[];
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
+	blacklist: []
 };
+
+
+class CommandSuggest extends AbstractInputSuggest<Command> {
+	plugin: MyPlugin;
+	inputEl: HTMLInputElement;
+	tab: SampleSettingTab;
+	next: ((command: Command) => void)[] = [];
+
+	constructor(tab: SampleSettingTab, inputEl: HTMLInputElement) {
+		super(tab.plugin.app, inputEl);
+		this.inputEl = inputEl;
+		this.plugin = tab.plugin;
+		this.tab = tab;
+	}
+
+	getSuggestions(query: string) {
+		const search = prepareFuzzySearch(query);
+		const commands = Object.values(this.plugin.app.commands.commands);
+
+		const results: (SearchResultContainer & { command: Command })[] = [];
+
+		for (const command of commands) {
+			const match = search(command.name);
+			if (match) results.push({ match, command });
+		}
+
+		sortSearchResults(results);
+
+		return results.map(({ command }) => command);
+	}
+
+	renderSuggestion(command: Command, el: HTMLElement) {
+		el.setText(command.name);
+	}
+
+	selectSuggestion(command: Command) {
+		this.inputEl.blur();
+		this.inputEl.value = command.name;
+		this.close();
+		this.next.forEach((callback) => callback(command));
+	}
+
+	then(callback: (command: Command) => void) {
+		this.next.push(callback);
+		return this;
+	}
+}
+
 
 // Inspired by https://stackoverflow.com/a/50851710/13613783
 export type KeysOfType<Obj, Type> = NonNullable<{ [k in keyof Obj]: Obj[k] extends Type ? k : never }[keyof Obj]>;
@@ -14,88 +64,92 @@ export type KeysOfType<Obj, Type> = NonNullable<{ [k in keyof Obj]: Obj[k] exten
 export class SampleSettingTab extends PluginSettingTab {
 	constructor(public plugin: MyPlugin) {
 		super(plugin.app, plugin);
+		this.containerEl.addClass('command-blacklist-settings');
 	}
 
-	addHeading(heading: string) {
-	    return new Setting(this.containerEl).setName(heading).setHeading();
-    }
+	get settings(): MyPluginSettings {
+		return this.plugin.settings;
+	}
 
-	addTextSetting(settingName: KeysOfType<MyPluginSettings, string>) {
-		return new Setting(this.containerEl)
-			.addText((text) => {
-				text.setValue(this.plugin.settings[settingName])
-					.setPlaceholder(DEFAULT_SETTINGS[settingName])
-					.onChange(async (value) => {
-						// @ts-ignore
-						this.plugin.settings[settingName] = value;
-						await this.plugin.saveSettings();
-					});
+	addSetting() {
+		return new Setting(this.containerEl);
+	}
+
+	addHeading(heading: string, icon?: IconName) {
+		return this.addSetting()
+			.setName(heading)
+			.setHeading()
+			.then((setting) => {
+				if (icon) {
+					const iconEl = createDiv();
+					setting.settingEl.prepend(iconEl)
+					setIcon(iconEl, icon);
+					setting.settingEl.addClass('pdf-plus-setting-heading');
+				}
 			});
 	}
 
-	addNumberSetting(settingName: KeysOfType<MyPluginSettings, number>) {
-		return new Setting(this.containerEl)
-			.addText((text) => {
-				text.setValue('' + this.plugin.settings[settingName])
-					.setPlaceholder('' + DEFAULT_SETTINGS[settingName])
-					.then((text) => text.inputEl.type = "number")
-					.onChange(async (value) => {
-						// @ts-ignore
-						this.plugin.settings[settingName] = value === '' ? DEFAULT_SETTINGS[settingName] : +value;
-						await this.plugin.saveSettings();
-					});
-			});
+	redisplay() {
+		const scrollTop = this.containerEl.scrollTop;
+		this.display();
+		this.containerEl.scroll({ top: scrollTop });
 	}
 
-	addToggleSetting(settingName: KeysOfType<MyPluginSettings, boolean>, extraOnChange?: (value: boolean) => void) {
-		return new Setting(this.containerEl)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings[settingName])
-					.onChange(async (value) => {
-						// @ts-ignore
-						this.plugin.settings[settingName] = value;
-						await this.plugin.saveSettings();
-						extraOnChange?.(value);
-					});
-			});
-	}
-
-	addDropdowenSetting(settingName: KeysOfType<MyPluginSettings, string>, options: readonly string[], display?: (option: string) => string, extraOnChange?: (value: string) => void) {
-		return new Setting(this.containerEl)
-			.addDropdown((dropdown) => {
-				const displayNames = new Set<string>();
-				for (const option of options) {
-					const displayName = display?.(option) ?? option;
-					if (!displayNames.has(displayName)) {
-						dropdown.addOption(option, displayName);
-						displayNames.add(displayName);
-					}
-				};
-				dropdown.setValue(this.plugin.settings[settingName])
-					.onChange(async (value) => {
-						// @ts-ignore
-						this.plugin.settings[settingName] = value;
-						await this.plugin.saveSettings();
-						extraOnChange?.(value);
-					});
-			});
-	}
-
-	addSliderSetting(settingName: KeysOfType<MyPluginSettings, number>, min: number, max: number, step: number) {
-		return new Setting(this.containerEl)
-			.addSlider((slider) => {
-				slider.setLimits(min, max, step)
-					.setValue(this.plugin.settings[settingName])
-					.setDynamicTooltip()
-					.onChange(async (value) => {
-						// @ts-ignore
-						this.plugin.settings[settingName] = value;
-						await this.plugin.saveSettings();
-					});
-			});
-	}
-	
 	display(): void {
 		this.containerEl.empty();
+
+		this.settings.blacklist.sort((a, b) => {
+			const cmdA = this.app.commands.findCommand(a);
+			const cmdB = this.app.commands.findCommand(b);
+			if (cmdA === undefined) return cmdB === undefined ? 0 : 1;
+			else if (cmdB === undefined) return -1;
+
+			return cmdA.name.localeCompare(cmdB.name);
+		});
+
+		this.addSetting()
+			.setDesc('List the commands you want to blacklist. These commands will not be shown in the command palette.')
+			.addExtraButton((button) => {
+				button
+					.setIcon('plus')
+					.setTooltip('Add command to blacklist')
+					.onClick(() => {
+						this.settings.blacklist.push('');
+						this.redisplay();
+					});
+			});
+
+		for (let i = 0; i < this.settings.blacklist.length; i++) {
+			const id = this.settings.blacklist[i];
+			const command = this.app.commands.findCommand(id);
+			this.addSetting()
+				.addText((text) => {
+					if (command) text.setValue(command.name);
+
+					text.inputEl.size = 40;
+					new CommandSuggest(this, text.inputEl)
+					.then((cmd) => {
+						this.settings.blacklist[i] = cmd.id;
+						this.redisplay();
+					});
+				})
+				.addExtraButton((button) => {
+					button
+						.setIcon('trash')
+						.setTooltip('Remove command from blacklist')
+						.onClick(() => {
+							this.settings.blacklist.splice(i, 1);
+							this.redisplay();
+						});
+				});
+		}
+	}
+
+	hide() {
+		this.settings.blacklist = this.settings.blacklist.filter((id) => {
+			const command = this.app.commands.findCommand(id);
+			return command !== undefined;
+		});
+		this.plugin.saveSettings();
 	}
 }
