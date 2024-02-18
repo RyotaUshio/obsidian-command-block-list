@@ -1,4 +1,5 @@
 import { AbstractInputSuggest, Command, IconName, PluginSettingTab, SearchResultContainer, Setting, prepareFuzzySearch, setIcon, sortSearchResults, setTooltip } from 'obsidian';
+
 import MyPlugin from 'main';
 
 
@@ -26,7 +27,8 @@ class CommandSuggest extends AbstractInputSuggest<Command> {
 
 	getSuggestions(query: string) {
 		const search = prepareFuzzySearch(query);
-		const commands = Object.values(this.plugin.app.commands.commands);
+		const commands = Object.values(this.plugin.app.commands.commands)
+			.filter((command) => !this.plugin.settings.blacklist.includes(command.id));
 
 		const results: (SearchResultContainer & { command: Command })[] = [];
 
@@ -96,15 +98,6 @@ export class SampleSettingTab extends PluginSettingTab {
 	display(): void {
 		this.containerEl.empty();
 
-		this.settings.blacklist.sort((a, b) => {
-			const cmdA = this.app.commands.findCommand(a);
-			const cmdB = this.app.commands.findCommand(b);
-			if (cmdA === undefined) return cmdB === undefined ? 0 : 1;
-			else if (cmdB === undefined) return -1;
-
-			return cmdA.name.localeCompare(cmdB.name);
-		});
-
 		this.addSetting()
 			.setDesc('List the commands you want to blacklist. These commands will not be shown in the command palette.')
 			.addExtraButton((button) => {
@@ -126,10 +119,10 @@ export class SampleSettingTab extends PluginSettingTab {
 
 					text.inputEl.size = 40;
 					new CommandSuggest(this, text.inputEl)
-					.then((cmd) => {
-						this.settings.blacklist[i] = cmd.id;
-						this.redisplay();
-					});
+						.then((cmd) => {
+							this.settings.blacklist[i] = cmd.id;
+							this.redisplay();
+						});
 				})
 				.addExtraButton((button) => {
 					button
@@ -144,10 +137,18 @@ export class SampleSettingTab extends PluginSettingTab {
 	}
 
 	hide() {
-		this.settings.blacklist = this.settings.blacklist.filter((id) => {
-			const command = this.app.commands.findCommand(id);
-			return command !== undefined;
-		});
+		this.settings.blacklist = this.settings.blacklist
+			.filter((id) => {
+				const command = this.app.commands.findCommand(id);
+				return command !== undefined;
+			})
+			.sort((a, b) => {
+				const cmdA = this.app.commands.findCommand(a)!;
+				const cmdB = this.app.commands.findCommand(b)!;
+
+				return cmdA.name.localeCompare(cmdB.name);
+			});
+
 		this.plugin.saveSettings();
 	}
 }

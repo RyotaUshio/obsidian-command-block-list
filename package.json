@@ -1,6 +1,6 @@
 {
     "name": "obsidian-command-blacklist",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "An Obsidian.md plugin to hide unwanted commands from the command palette.",
     "scripts": {
         "dev": "node esbuild.config.mjs",
