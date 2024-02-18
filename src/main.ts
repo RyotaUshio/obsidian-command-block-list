@@ -12,13 +12,13 @@ export default class MyPlugin extends Plugin {
 		await this.saveSettings();
 		this.addSettingTab(new SampleSettingTab(this));
 
-		const blacklist = this.settings.blacklist;
+		const blockList = this.settings.blockList;
 
 		this.register(around(this.app.commands.constructor.prototype, {
 			listCommands(old) {
 				return function (...args: any[]) {
 					const commands: Command[] = old.call(this, ...args);
-					return commands.filter((command) => !blacklist.includes(command.id));
+					return commands.filter((command) => !blockList.includes(command.id));
 				}
 			}
 		}));

@@ -1,7 +1,7 @@
 {
-    "id": "command-blacklist",
-    "name": "Command Blacklist",
-    "version": "0.1.2",
+    "id": "command-block-list",
+    "name": "Command Block List",
+    "version": "0.1.3",
     "minAppVersion": "1.3.5",
     "description": "Hide unwanted commands from the command palette.",
     "author": "Ryota Ushio",

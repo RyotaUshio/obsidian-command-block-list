@@ -4,11 +4,11 @@ import MyPlugin from 'main';
 
 
 export interface MyPluginSettings {
-	blacklist: string[];
+	blockList: string[];
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
-	blacklist: []
+	blockList: []
 };
 
 
@@ -28,7 +28,7 @@ class CommandSuggest extends AbstractInputSuggest<Command> {
 	getSuggestions(query: string) {
 		const search = prepareFuzzySearch(query);
 		const commands = Object.values(this.plugin.app.commands.commands)
-			.filter((command) => !this.plugin.settings.blacklist.includes(command.id));
+			.filter((command) => !this.plugin.settings.blockList.includes(command.id));
 
 		const results: (SearchResultContainer & { command: Command })[] = [];
 
@@ -99,19 +99,19 @@ export class SampleSettingTab extends PluginSettingTab {
 		this.containerEl.empty();
 
 		this.addSetting()
-			.setDesc('List the commands you want to blacklist. These commands will not be shown in the command palette.')
+			.setDesc('List the commands you want to block. These commands will not be shown in the command palette.')
 			.addExtraButton((button) => {
 				button
 					.setIcon('plus')
-					.setTooltip('Add command to blacklist')
+					.setTooltip('Add command to block list')
 					.onClick(() => {
-						this.settings.blacklist.push('');
+						this.settings.blockList.push('');
 						this.redisplay();
 					});
 			});
 
-		for (let i = 0; i < this.settings.blacklist.length; i++) {
-			const id = this.settings.blacklist[i];
+		for (let i = 0; i < this.settings.blockList.length; i++) {
+			const id = this.settings.blockList[i];
 			const command = this.app.commands.findCommand(id);
 			this.addSetting()
 				.addText((text) => {
@@ -120,16 +120,16 @@ export class SampleSettingTab extends PluginSettingTab {
 					text.inputEl.size = 40;
 					new CommandSuggest(this, text.inputEl)
 						.then((cmd) => {
-							this.settings.blacklist[i] = cmd.id;
+							this.settings.blockList[i] = cmd.id;
 							this.redisplay();
 						});
 				})
 				.addExtraButton((button) => {
 					button
 						.setIcon('trash')
-						.setTooltip('Remove command from blacklist')
+						.setTooltip('Remove command from block list')
 						.onClick(() => {
-							this.settings.blacklist.splice(i, 1);
+							this.settings.blockList.splice(i, 1);
 							this.redisplay();
 						});
 				});
@@ -137,7 +137,7 @@ export class SampleSettingTab extends PluginSettingTab {
 	}
 
 	hide() {
-		this.settings.blacklist = this.settings.blacklist
+		this.settings.blockList = this.settings.blockList
 			.filter((id) => {
 				const command = this.app.commands.findCommand(id);
 				return command !== undefined;
