@@ -1,4 +1,4 @@
-# Obsidian Command Blacklist
+# Obsidian Command Block List
 
 This is an [Obsidian.md](https://obsidian.md) plugin for hiding unwanted commands from the command palette.
 
@@ -10,7 +10,7 @@ You can install the latest release using [BRAT](https://github.com/TfTHacker/obs
 
 1. Install the latest version of BRAT and enable it.
 2. _(Optional but highly recommended)_ In the BRAT settings, turn on `Auto-update plugins at startup` at the top of the page.
-3. Open the following URL in your browser: `obsidian://brat?plugin=RyotaUshio/obsidian-command-blacklist`.
+3. Open the following URL in your browser: `obsidian://brat?plugin=RyotaUshio/obsidian-command-block-list`.
 4. Click the "Add Plugin" button.
 
 ## Support development
