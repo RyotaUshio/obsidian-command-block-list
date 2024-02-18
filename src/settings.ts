@@ -64,7 +64,6 @@ export type KeysOfType<Obj, Type> = NonNullable<{ [k in keyof Obj]: Obj[k] exten
 export class SampleSettingTab extends PluginSettingTab {
 	constructor(public plugin: MyPlugin) {
 		super(plugin.app, plugin);
-		this.containerEl.addClass('command-blacklist-settings');
 	}
 
 	get settings(): MyPluginSettings {
@@ -84,7 +83,6 @@ export class SampleSettingTab extends PluginSettingTab {
 					const iconEl = createDiv();
 					setting.settingEl.prepend(iconEl)
 					setIcon(iconEl, icon);
-					setting.settingEl.addClass('pdf-plus-setting-heading');
 				}
 			});
 	}
