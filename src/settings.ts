@@ -1,24 +1,24 @@
 import { AbstractInputSuggest, Command, IconName, PluginSettingTab, SearchResultContainer, Setting, prepareFuzzySearch, setIcon, sortSearchResults, setTooltip } from 'obsidian';
 
-import MyPlugin from 'main';
+import CommandBlockListPlugin from 'main';
 
 
-export interface MyPluginSettings {
+export interface CommandBlockListSettings {
 	blockList: string[];
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS: CommandBlockListSettings = {
 	blockList: []
 };
 
 
 class CommandSuggest extends AbstractInputSuggest<Command> {
-	plugin: MyPlugin;
+	plugin: CommandBlockListPlugin;
 	inputEl: HTMLInputElement;
-	tab: SampleSettingTab;
+	tab: CommandBlockListSettingTab;
 	next: ((command: Command) => void)[] = [];
 
-	constructor(tab: SampleSettingTab, inputEl: HTMLInputElement) {
+	constructor(tab: CommandBlockListSettingTab, inputEl: HTMLInputElement) {
 		super(tab.plugin.app, inputEl);
 		this.inputEl = inputEl;
 		this.plugin = tab.plugin;
@@ -63,12 +63,12 @@ class CommandSuggest extends AbstractInputSuggest<Command> {
 // Inspired by https://stackoverflow.com/a/50851710/13613783
 export type KeysOfType<Obj, Type> = NonNullable<{ [k in keyof Obj]: Obj[k] extends Type ? k : never }[keyof Obj]>;
 
-export class SampleSettingTab extends PluginSettingTab {
-	constructor(public plugin: MyPlugin) {
+export class CommandBlockListSettingTab extends PluginSettingTab {
+	constructor(public plugin: CommandBlockListPlugin) {
 		super(plugin.app, plugin);
 	}
 
-	get settings(): MyPluginSettings {
+	get settings(): CommandBlockListSettings {
 		return this.plugin.settings;
 	}
 

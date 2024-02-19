@@ -1,16 +1,16 @@
 import { Command, Plugin } from 'obsidian';
 import { around } from 'monkey-around';
 
-import { MyPluginSettings, DEFAULT_SETTINGS, SampleSettingTab } from 'settings';
+import { CommandBlockListSettings, DEFAULT_SETTINGS, CommandBlockListSettingTab } from 'settings';
 
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class CommandBlockListPlugin extends Plugin {
+	settings: CommandBlockListSettings;
 
 	async onload() {
 		await this.loadSettings();
 		await this.saveSettings();
-		this.addSettingTab(new SampleSettingTab(this));
+		this.addSettingTab(new CommandBlockListSettingTab(this));
 
 		const blockList = this.settings.blockList;
 
